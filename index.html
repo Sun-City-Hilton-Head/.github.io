@@ -97,6 +97,9 @@
     })
     drawerEl.querySelector('sl-button').addEventListener('click', () => drawerEl.open = false)
     drawerToggleEl.addEventListener('click', () => drawerEl.open = !drawerEl.open)
+    drawerEl.addEventListener('sl-show', () => {
+      fetch('/README.md').then(response => response.text()).then(text => { drawerEl.innerHTML = marked.parse(text) })
+    })
 
     const md2Html = (md) => marked.parse(md).replace(/^\s*<p>/, '').replace(/<\/p>\s*$/, '') // convert markdown to HTML
     const docReady = (fn) => { if (document.readyState === 'complete' || document.readyState === 'interactive') setTimeout(fn, 1); else document.addEventListener('DOMContentLoaded', fn) }
