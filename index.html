@@ -29,6 +29,7 @@
     .response { margin-right: auto; position: relative; }
     sl-copy-button { position: absolute; right: -22px; bottom: -4px; margin-left: 0.25rem; padding: 0; background-color: inherit; }
     sl-drawer::part(base) { height: calc(100% - 98px); background-color: }
+    .drawer-content p { font-size: 1.1em; line-height: 1.5; }
     @media (min-width: 600px) { /* desktop, laptops, wider devices */
       .chat-area { padding: 1em; } 
       .message { max-width: 90%; box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px; }
@@ -54,8 +55,8 @@
       <svg class="submit" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM385 215c9.4 9.4 9.4 24.6 0 33.9s-24.6 9.4-33.9 0l-71-71L280 392c0 13.3-10.7 24-24 24s-24-10.7-24-24l0-214.1-71 71c-9.4 9.4-24.6 9.4-33.9 0s-9.4-24.6 0-33.9L239 103c9.4-9.4 24.6-9.4 33.9 0L385 215z"/></svg>
     </div>
     <div class="advisory">This tool can make mistakes. Check important info.</div>
-    <sl-drawer contained label="About" class="drawer" style="--size: 100%;">
-      Placeholder for information about the SCHH AI Chatbot...
+    <sl-drawer contained no-header class="drawer" style="--size: 100%;">
+      <div class="drawer-content"></div>
       <sl-button slot="footer" variant="primary">Close</sl-button>
     </sl-drawer>
   </div>
@@ -79,6 +80,7 @@
 
     const chatEl = document.querySelector('.chat-area')
     const drawerEl = document.querySelector('.drawer')
+    const drawerContentEl = document.querySelector('.drawer-content')
     const inputEl = document.querySelector('.chat-textarea')
     const submitEl = document.querySelector('.submit')
     const drawerToggleEl = document.querySelector('.drawer-toggle')
@@ -97,9 +99,23 @@
     })
     drawerEl.querySelector('sl-button').addEventListener('click', () => drawerEl.open = false)
     drawerToggleEl.addEventListener('click', () => drawerEl.open = !drawerEl.open)
-    drawerEl.addEventListener('sl-show', () => {
-      fetch('/README.md').then(response => response.text()).then(text => { drawerEl.innerHTML = marked.parse(text) })
-    })
+
+    const getDrawerContent = (path) => {
+      if (!path.endsWith('.md')) path += '.md'
+      fetch(path).then(response => response.text()).then(text => {
+        drawerContentEl.innerHTML = `<a href="README" style="color: #791917; visibility:${path === 'README.md' ? 'hidden' : 'visible'};">Back</a> ` + marked.parse(text) 
+        drawerContentEl.querySelectorAll('a').forEach(a => {
+          if (new URL(a.href).origin === window.location.origin) {
+            a.addEventListener('click', (e) => {
+              e.preventDefault()
+              getDrawerContent(a.getAttribute('href'))
+            })
+          }
+        })
+      })
+    }
+
+    drawerEl.addEventListener('sl-show', () => getDrawerContent('README'))
 
     const md2Html = (md) => marked.parse(md).replace(/^\s*<p>/, '').replace(/<\/p>\s*$/, '') // convert markdown to HTML
     const docReady = (fn) => { if (document.readyState === 'complete' || document.readyState === 'interactive') setTimeout(fn, 1); else document.addEventListener('DOMContentLoaded', fn) }
